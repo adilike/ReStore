@@ -3,6 +3,7 @@ import { AppBar, Badge, Box, IconButton, List, ListItem, Switch, Toolbar, Typogr
 import { Link, NavLink } from "react-router-dom";
 //import { useStoreContext } from "../app/context/StoreContext";
 import { useAppSelector } from "../app/store/configureStore";
+import SignedInMenu from "./SignedInMenu";
 
 interface Props {
     darkMode: boolean;
@@ -33,6 +34,7 @@ typography: "h6",
 
 const Header = ({darkMode , handleThemeChange}: Props) => {
   const { basket } =  useAppSelector(state => state.basket)
+  const { user } = useAppSelector(state => state.account);
   const itemCount = basket?.items.reduce((sum, item) => sum + item.quantity, 0)
   return (
     <AppBar position="static" sx={{mb: 4}}>
@@ -63,7 +65,10 @@ const Header = ({darkMode , handleThemeChange}: Props) => {
                     <ShoppingCart />
                   </Badge>
                 </IconButton>
-                <List sx={{display: "flex"}}>
+                { user ? (
+                  <SignedInMenu />
+                ) : (
+                  <List sx={{display: "flex"}}>
                   {rightLinks.map(({title, path}) => (
                     <ListItem
                       component={NavLink}
@@ -75,6 +80,7 @@ const Header = ({darkMode , handleThemeChange}: Props) => {
                     </ListItem>
                   ))}
                 </List>
+                ) }
             </Box>
 
         </Toolbar>

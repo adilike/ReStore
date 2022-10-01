@@ -1,5 +1,5 @@
 import { Container, createTheme, CssBaseline, ThemeProvider } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Route, Switch } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import AboutPage from "../features/about/AboutPage";
@@ -13,12 +13,16 @@ import ServerError from "../app/errors/ServerError";
 import NotFound from "../app/errors/NotFound";
 import BasketPage from "../features/basket/BasketPage";
 //import { useStoreContext } from "../app/context/StoreContext";
-import { getCookie } from "../app/util/util";
-import agent from "../app/api/agent";
+
+
 import LoadingComponent from "./LoadingComponent";
 import CheckoutPage from "../features/checkout/CheckoutPage";
 import { useAppDispatch } from "../app/store/configureStore";
-import { setBasket } from "../features/basket/basketSlice";
+import { fetchBasketAsync } from "../features/basket/basketSlice";
+import Login from "../features/account/Login";
+import Register from "../features/account/Register";
+import { fetchCurrentUser } from "../features/account/accountSlice";
+import PrivateRoute from "./PrivateRoute";
 
 
 function App() {
@@ -26,17 +30,18 @@ function App() {
  const dispatch = useAppDispatch();
   const [ loading, setLoading ] = useState(true);
 
-  useEffect(() => {
-    const buyerId = getCookie("buyerId");
-    if(buyerId){
-      agent.Basket.get()
-        .then(basket => dispatch(setBasket(basket)))
-        .catch(error => console.log(error))
-        .finally(() => setLoading(false))
-    }else {
-      setLoading(false);
+  const initApp = useCallback(async () =>  {
+    try {
+      await dispatch(fetchCurrentUser());
+      await dispatch(fetchBasketAsync());
+    } catch (error) {
+      console.log(error);
     }
-  }, [dispatch]);
+  }, [dispatch])
+
+  useEffect(() => {
+   initApp().then(() => setLoading(false));
+  }, [initApp]);
 
   const [darkMode, setDarkMode] = useState(false);
   const parletteType = darkMode ? "dark" : "light";
@@ -69,7 +74,9 @@ if(loading) return <LoadingComponent message="Initializing app ..." />
       <Route path="/contact" component={ContactPage}/>
       <Route path="/server-error" component={ServerError}/>
       <Route path="/basket" component={BasketPage}/>
-      <Route path="/checkout" component={CheckoutPage}/>
+      <PrivateRoute path="/checkout" component={CheckoutPage}/>
+      <Route path="/login" component={Login}/>
+      <Route path="/register" component={Register}/>
       <Route  component={NotFound}/>
         </Switch>
       </Container>
